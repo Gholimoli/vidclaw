@@ -1,14 +1,8 @@
 import React, { useState } from 'react'
-import { useDraggable } from '@dnd-kit/core'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import { GripVertical, Pencil, Trash2, Clock, Play, AlertCircle, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
-
-const priorityColors = {
-  low: 'border-l-zinc-500',
-  medium: 'border-l-blue-500',
-  high: 'border-l-amber-500',
-  urgent: 'border-l-red-500',
-}
 
 function formatTime(iso) {
   if (!iso) return ''
@@ -31,11 +25,15 @@ function ScheduleBadge({ schedule }) {
   )
 }
 
-export default function TaskCard({ task, onEdit, onDelete, onRun, isDragging }) {
+export default function TaskCard({ task, onEdit, onDelete, onRun, isDragging: isDraggingProp }) {
   const [expanded, setExpanded] = useState(false)
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: task.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
 
-  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+  const dragging = isDraggingProp || isDragging
   const isInProgress = task.status === 'in-progress'
   const isDone = task.status === 'done'
   const hasError = !!task.error
@@ -46,9 +44,8 @@ export default function TaskCard({ task, onEdit, onDelete, onRun, isDragging }) 
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group bg-card border border-border rounded-lg p-3 border-l-2 cursor-grab active:cursor-grabbing transition-shadow',
-        priorityColors[task.priority] || 'border-l-zinc-500',
-        isDragging && 'shadow-xl opacity-90 rotate-2',
+        'group bg-card border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing transition-shadow',
+        dragging && 'shadow-xl opacity-90 rotate-2 z-50',
         isInProgress && 'border-amber-500/50 animate-pulse-subtle',
         hasError && 'border-red-500/50'
       )}
@@ -58,6 +55,7 @@ export default function TaskCard({ task, onEdit, onDelete, onRun, isDragging }) 
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
+            <GripVertical size={12} className="text-muted-foreground shrink-0 opacity-50 group-hover:opacity-100" />
             {isInProgress && <Loader2 size={12} className="text-amber-400 animate-spin shrink-0" />}
             <p className="text-sm font-medium truncate">{task.title}</p>
           </div>
@@ -90,15 +88,6 @@ export default function TaskCard({ task, onEdit, onDelete, onRun, isDragging }) 
       </div>
 
       <div className="flex items-center gap-2 mt-2 flex-wrap">
-        <span className={cn(
-          'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-          task.priority === 'urgent' ? 'bg-red-500/20 text-red-400' :
-          task.priority === 'high' ? 'bg-amber-500/20 text-amber-400' :
-          task.priority === 'medium' ? 'bg-blue-500/20 text-blue-400' :
-          'bg-zinc-500/20 text-zinc-400'
-        )}>
-          {task.priority}
-        </span>
         {task.skill && (
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400">{task.skill}</span>
         )}
@@ -110,12 +99,10 @@ export default function TaskCard({ task, onEdit, onDelete, onRun, isDragging }) 
         )}
       </div>
 
-      {/* In Progress: show startedAt */}
       {isInProgress && task.startedAt && (
         <p className="text-[10px] text-muted-foreground mt-1.5">Started {formatTime(task.startedAt)}</p>
       )}
 
-      {/* Done: show completedAt and result */}
       {isDone && (
         <div className="mt-1.5 space-y-1">
           {task.completedAt && <p className="text-[10px] text-muted-foreground">Completed {formatTime(task.completedAt)}</p>}

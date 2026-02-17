@@ -11,7 +11,7 @@ function getDefaultScheduleTime() {
 }
 
 export default function TaskDialog({ open, onClose, onSave, task }) {
-  const [form, setForm] = useState({ title: '', description: '', priority: 'medium', skill: '', status: 'backlog', schedule: null })
+  const [form, setForm] = useState({ title: '', description: '', skill: '', status: 'backlog', schedule: null })
   const [scheduleType, setScheduleType] = useState('none')
   const [scheduleTime, setScheduleTime] = useState(getDefaultScheduleTime())
   const [skills, setSkills] = useState([])
@@ -22,13 +22,13 @@ export default function TaskDialog({ open, onClose, onSave, task }) {
 
   useEffect(() => {
     if (task) {
-      setForm({ title: task.title, description: task.description, priority: task.priority, skill: task.skill || '', status: task.status, schedule: task.schedule || null })
+      setForm({ title: task.title, description: task.description, skill: task.skill || '', status: task.status, schedule: task.schedule || null })
       if (!task.schedule) { setScheduleType('none') }
       else if (task.schedule === 'asap') { setScheduleType('asap') }
       else if (task.schedule === 'next-heartbeat') { setScheduleType('next-heartbeat') }
       else { setScheduleType('specific'); setScheduleTime(task.schedule.slice(0, 16)) }
     } else {
-      setForm({ title: '', description: '', priority: 'medium', skill: '', status: 'backlog', schedule: null })
+      setForm({ title: '', description: '', skill: '', status: 'backlog', schedule: null })
       setScheduleType('none')
       setScheduleTime(getDefaultScheduleTime())
     }
@@ -84,34 +84,18 @@ export default function TaskDialog({ open, onClose, onSave, task }) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Priority</label>
-              <select
-                className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none"
-                value={form.priority}
-                onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Status</label>
-              <select
-                className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none"
-                value={form.status}
-                onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-              >
-                <option value="backlog">Backlog</option>
-                <option value="todo">Todo</option>
-                <option value="in-progress">In Progress</option>
-                <option value="done">Done</option>
-              </select>
-            </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Status</label>
+            <select
+              className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none"
+              value={form.status}
+              onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+            >
+              <option value="backlog">Backlog</option>
+              <option value="todo">Todo</option>
+              <option value="in-progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
           </div>
 
           <div>

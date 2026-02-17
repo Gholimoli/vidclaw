@@ -51,6 +51,7 @@ app.post('/api/tasks', (req, res) => {
     result: null,
     startedAt: null,
     error: null,
+    order: req.body.order ?? tasks.filter(t => t.status === (req.body.status || 'backlog')).length,
   };
   tasks.push(task);
   writeTasks(tasks);
@@ -62,7 +63,7 @@ app.put('/api/tasks/:id', (req, res) => {
   const idx = tasks.findIndex(t => t.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
   const wasNotDone = tasks[idx].status !== 'done';
-  const allowedFields = ['title', 'description', 'priority', 'skill', 'status', 'schedule', 'scheduledAt', 'result', 'startedAt', 'completedAt', 'error'];
+  const allowedFields = ['title', 'description', 'priority', 'skill', 'status', 'schedule', 'scheduledAt', 'result', 'startedAt', 'completedAt', 'error', 'order'];
   const updates = {};
   for (const k of allowedFields) { if (req.body[k] !== undefined) updates[k] = req.body[k]; }
   tasks[idx] = { ...tasks[idx], ...updates, updatedAt: new Date().toISOString() };
@@ -72,8 +73,20 @@ app.put('/api/tasks/:id', (req, res) => {
   res.json(tasks[idx]);
 });
 
+// Reorder tasks within a column
+app.post('/api/tasks/reorder', (req, res) => {
+  const { status, order } = req.body;
+  if (!status || !Array.isArray(order)) return res.status(400).json({ error: 'status and order[] required' });
+  const tasks = readTasks();
+  for (let i = 0; i < order.length; i++) {
+    const idx = tasks.findIndex(t => t.id === order[i]);
+    if (idx !== -1) tasks[idx].order = i;
+  }
+  writeTasks(tasks);
+  res.json({ ok: true });
+});
+
 // Task scheduling endpoints
-const PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3 };
 
 app.post('/api/tasks/:id/run', (req, res) => {
   const tasks = readTasks();
@@ -102,10 +115,10 @@ app.get('/api/tasks/queue', (req, res) => {
     return true;
   });
   queue.sort((a, b) => {
-    const pa = PRIORITY_ORDER[a.priority] ?? 2;
-    const pb = PRIORITY_ORDER[b.priority] ?? 2;
-    if (pa !== pb) return pa - pb;
-    return (a.scheduledAt || '').localeCompare(b.scheduledAt || '');
+    const oa = a.order ?? 999999;
+    const ob = b.order ?? 999999;
+    if (oa !== ob) return oa - ob;
+    return (a.createdAt || '').localeCompare(b.createdAt || '');
   });
   res.json(queue);
 });

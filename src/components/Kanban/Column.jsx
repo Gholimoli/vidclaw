@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import TaskCard from './TaskCard'
-import { Plus, X, HeartPulse } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import HeartbeatTimer from '../Usage/HeartbeatTimer'
 
@@ -27,6 +28,8 @@ export default function Column({ column, tasks, onAdd, onQuickAdd, onEdit, onDel
     if (e.key === 'Escape') { setAdding(false); setTitle('') }
   }
 
+  const taskIds = tasks.map(t => t.id)
+
   return (
     <div
       ref={setNodeRef}
@@ -44,12 +47,13 @@ export default function Column({ column, tasks, onAdd, onQuickAdd, onEdit, onDel
         {column.id === 'todo' && <HeartbeatTimer />}
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
-        {tasks.map(task => (
-          <TaskCard key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} onRun={onRun} />
-        ))}
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          {tasks.map(task => (
+            <TaskCard key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} onRun={onRun} />
+          ))}
+        </SortableContext>
       </div>
 
-      {/* Quick add at bottom — backlog only */}
       {column.id === 'backlog' && <div className="p-2 border-t border-border/50">
         {!adding ? (
           <button

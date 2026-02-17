@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import React, { useState, useEffect, useCallback } from 'react'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 import Column from './Column'
 import TaskCard from './TaskCard'
 import TaskDialog from './TaskDialog'
@@ -25,8 +26,6 @@ export default function Board() {
   }, [])
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
-
-  // Auto-refresh every 30 seconds
   useEffect(() => {
     const interval = setInterval(fetchTasks, 30000)
     return () => clearInterval(interval)
@@ -34,28 +33,82 @@ export default function Board() {
 
   const activeTask = tasks.find(t => t.id === activeId)
 
+  function getColumnTasks(columnId) {
+    const filtered = tasks.filter(t => t.status === columnId)
+    if (columnId === 'done') {
+      return filtered.sort((a, b) => {
+        const da = a.completedAt || a.updatedAt || a.createdAt || ''
+        const db = b.completedAt || b.updatedAt || b.createdAt || ''
+        return db.localeCompare(da)
+      })
+    }
+    return filtered.sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999))
+  }
+
+  function findColumn(taskId) {
+    const task = tasks.find(t => t.id === taskId)
+    return task?.status || null
+  }
+
   async function handleDragEnd(event) {
     const { active, over } = event
     setActiveId(null)
     if (!over) return
-    const columnId = over.id
-    if (!COLUMNS.find(c => c.id === columnId)) return
-    const task = tasks.find(t => t.id === active.id)
-    if (!task || task.status === columnId) return
 
-    // Optimistic update: move card immediately in local state
-    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: columnId } : t))
+    const activeTaskObj = tasks.find(t => t.id === active.id)
+    if (!activeTaskObj) return
 
-    try {
-      await fetch(`/api/tasks/${task.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: columnId }),
-      })
-      fetchTasks()
-    } catch {
-      // Revert on failure
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: task.status } : t))
+    // Determine target column: over could be a column or another task
+    const isColumn = COLUMNS.find(c => c.id === over.id)
+    let targetColumn, overTaskId
+    if (isColumn) {
+      targetColumn = over.id
+      overTaskId = null
+    } else {
+      const overTask = tasks.find(t => t.id === over.id)
+      if (!overTask) return
+      targetColumn = overTask.status
+      overTaskId = over.id
+    }
+
+    const sourceColumn = activeTaskObj.status
+
+    if (sourceColumn === targetColumn) {
+      // Reorder within column
+      const columnTasks = getColumnTasks(sourceColumn)
+      const oldIndex = columnTasks.findIndex(t => t.id === active.id)
+      const newIndex = overTaskId ? columnTasks.findIndex(t => t.id === overTaskId) : columnTasks.length - 1
+      if (oldIndex === newIndex) return
+
+      const reordered = arrayMove(columnTasks, oldIndex, newIndex)
+      const orderMap = {}
+      reordered.forEach((t, i) => { orderMap[t.id] = i })
+
+      // Optimistic update
+      setTasks(prev => prev.map(t => orderMap[t.id] !== undefined ? { ...t, order: orderMap[t.id] } : t))
+
+      try {
+        await fetch('/api/tasks/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: sourceColumn, order: reordered.map(t => t.id) }),
+        })
+      } catch {
+        fetchTasks()
+      }
+    } else {
+      // Move to different column
+      setTasks(prev => prev.map(t => t.id === active.id ? { ...t, status: targetColumn } : t))
+      try {
+        await fetch(`/api/tasks/${active.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: targetColumn }),
+        })
+        fetchTasks()
+      } catch {
+        fetchTasks()
+      }
     }
   }
 
@@ -92,7 +145,7 @@ export default function Board() {
     await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, status, priority: 'medium' }),
+      body: JSON.stringify({ title, status }),
     })
     fetchTasks()
   }
@@ -109,13 +162,13 @@ export default function Board() {
 
   return (
     <>
-      <DndContext sensors={sensors} onDragStart={e => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={e => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 h-full overflow-x-auto pb-2">
           {COLUMNS.map(col => (
             <Column
               key={col.id}
               column={col}
-              tasks={tasks.filter(t => t.status === col.id)}
+              tasks={getColumnTasks(col.id)}
               onAdd={() => openNew(col.id)}
               onQuickAdd={handleQuickAdd}
               onEdit={openEdit}
