@@ -158,7 +158,6 @@ function SkillPicker({ selectedSkills, onChange, allSkills }) {
 export default function TaskDialog({ open, onClose, onSave, task }) {
   const [form, setForm] = useState({ title: '', description: '', skills: [], status: 'backlog' })
   const [skills, setSkills] = useState([])
-  const [activeTab, setActiveTab] = useState('form')
 
   useEffect(() => {
     fetch('/api/skills').then(r => r.json()).then(setSkills).catch(() => {})
@@ -171,7 +170,6 @@ export default function TaskDialog({ open, onClose, onSave, task }) {
     } else {
       setForm({ title: '', description: '', skills: [], status: 'backlog' })
     }
-    setActiveTab('form')
   }, [task, open])
 
   if (!open) return null
@@ -185,7 +183,7 @@ export default function TaskDialog({ open, onClose, onSave, task }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-card border border-border w-full max-w-2xl flex flex-col shadow-2xl rounded-xl max-h-[85vh]"
+        className="bg-card border border-border w-full max-w-4xl flex flex-col shadow-2xl rounded-xl max-h-[85vh]"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
@@ -193,84 +191,73 @@ export default function TaskDialog({ open, onClose, onSave, task }) {
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
         </div>
 
-        <div className="flex border-b border-border shrink-0">
-          <button
-            onClick={() => setActiveTab('form')}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${activeTab === 'form' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            {task ? 'Edit' : 'Create'}
-          </button>
-          <button
-            onClick={() => setActiveTab('activity')}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'activity' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <Activity size={14} /> Activity Log
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto min-h-[320px]">
-          {activeTab === 'form' ? (
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Title</label>
-                <input
-                  className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-                  value={form.title}
-                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  placeholder="Task title..."
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-                <textarea
-                  className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary resize-none h-28"
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Description..."
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Status</label>
-                <select
-                  className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none"
-                  value={form.status}
-                  onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                >
-                  <option value="backlog">Backlog</option>
-                  <option value="todo">Todo</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="done">Done</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Skills</label>
-                <SkillPicker
-                  selectedSkills={form.skills}
-                  onChange={skills => setForm(f => ({ ...f, skills }))}
-                  allSkills={skills}
-                />
-              </div>
+        <div className="flex-1 overflow-hidden min-h-[320px] flex flex-col md:flex-row">
+          {/* Form — left 2/3 */}
+          <div className="w-full md:w-2/3 overflow-y-auto p-5 space-y-4">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Title</label>
+              <input
+                className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+                value={form.title}
+                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="Task title..."
+                autoFocus
+              />
             </div>
-          ) : (
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Description</label>
+              <textarea
+                className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary resize-none h-28"
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Description..."
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Status</label>
+              <select
+                className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm outline-none"
+                value={form.status}
+                onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+              >
+                <option value="backlog">Backlog</option>
+                <option value="todo">Todo</option>
+                <option value="in-progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Skills</label>
+              <SkillPicker
+                selectedSkills={form.skills}
+                onChange={skills => setForm(f => ({ ...f, skills }))}
+                allSkills={skills}
+              />
+            </div>
+          </div>
+
+          {/* Activity Log — right 1/3 */}
+          <div className="w-full md:w-1/3 border-t md:border-t-0 md:border-l border-border overflow-y-auto">
+            <div className="flex items-center gap-1.5 px-4 py-3 text-sm font-medium text-muted-foreground border-b border-border">
+              <Activity size={14} />
+              Activity Log
+            </div>
             <ActivityLog taskId={task?.id} />
-          )}
+          </div>
         </div>
 
-        {activeTab === 'form' && (
-          <div className="flex justify-end gap-2 px-5 py-4 border-t border-border shrink-0">
-            <button onClick={onClose} className="px-4 py-2 text-sm rounded-md bg-secondary hover:bg-accent transition-colors">Cancel</button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity font-medium"
-            >
-              {task ? 'Update' : 'Create'}
-            </button>
-          </div>
-        )}
+        <div className="flex justify-end gap-2 px-5 py-4 border-t border-border shrink-0">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-md bg-secondary hover:bg-accent transition-colors">Cancel</button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity font-medium"
+          >
+            {task ? 'Update' : 'Create'}
+          </button>
+        </div>
       </div>
     </div>
   )
