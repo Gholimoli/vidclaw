@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Save, RotateCcw, Check, Clock, FileText, Sparkles, History, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAgent, withAgent } from '../AgentContext.jsx'
 
 const FILE_TABS = [
   { name: 'SOUL.md', label: 'Soul' },
@@ -30,28 +31,35 @@ export default function SoulEditor() {
   const [history, setHistory] = useState([])
   const [previewContent, setPreviewContent] = useState(null)
   const textareaRef = useRef(null)
+  const { agentId } = useAgent()
 
   const isDirty = content !== savedContent
   const isSoul = activeFile === 'SOUL.md'
 
   const loadFile = useCallback(async (name) => {
     try {
-      const url = name === 'SOUL.md' ? '/api/soul' : `/api/workspace-file?name=${name}`
+      const url =
+        name === 'SOUL.md'
+          ? withAgent('/api/soul', agentId)
+          : withAgent(`/api/workspace-file?name=${name}`, agentId)
       const r = await fetch(url)
       const d = await r.json()
       setContent(d.content || '')
       setSavedContent(d.content || '')
       setLastModified(d.lastModified)
     } catch {}
-  }, [])
+  }, [agentId])
 
   const loadHistory = useCallback(async (name) => {
     try {
-      const url = name === 'SOUL.md' ? '/api/soul/history' : `/api/workspace-file/history?name=${name}`
+      const url =
+        name === 'SOUL.md'
+          ? withAgent('/api/soul/history', agentId)
+          : withAgent(`/api/workspace-file/history?name=${name}`, agentId)
       const r = await fetch(url)
       setHistory(await r.json())
     } catch { setHistory([]) }
-  }, [])
+  }, [agentId])
 
   useEffect(() => { loadFile(activeFile); loadHistory(activeFile) }, [activeFile, loadFile, loadHistory])
 
@@ -62,7 +70,10 @@ export default function SoulEditor() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const url = activeFile === 'SOUL.md' ? '/api/soul' : `/api/workspace-file?name=${activeFile}`
+      const url =
+        activeFile === 'SOUL.md'
+          ? withAgent('/api/soul', agentId)
+          : withAgent(`/api/workspace-file?name=${activeFile}`, agentId)
       await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content }) })
       setSavedContent(content)
       setLastModified(new Date().toISOString())
@@ -75,14 +86,14 @@ export default function SoulEditor() {
   const handleRevert = async (idx) => {
     if (!confirm('Revert to this version? Current content will be saved to history.')) return
     if (activeFile === 'SOUL.md') {
-      const r = await fetch('/api/soul/revert', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ index: idx }) })
+      const r = await fetch(withAgent('/api/soul/revert', agentId), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ index: idx }) })
       const d = await r.json()
       if (d.success) { setContent(d.content); setSavedContent(d.content); loadHistory(activeFile) }
     } else {
       // For other files, load version content and save
       const ver = history[idx]
       if (!ver) return
-      const url = `/api/workspace-file?name=${activeFile}`
+      const url = withAgent(`/api/workspace-file?name=${activeFile}`, agentId)
       await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: ver.content }) })
       setContent(ver.content); setSavedContent(ver.content); loadHistory(activeFile)
     }

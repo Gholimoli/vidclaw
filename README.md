@@ -14,6 +14,7 @@ A secure, self-hosted command center for managing your OpenClaw AI agent.
 - **🧩 Skills Manager** — View all bundled/workspace skills, enable/disable them, create custom skills.
 - **💜 Soul Editor** — Edit SOUL.md, IDENTITY.md, USER.md, AGENTS.md with version history and persona templates.
 - **⚡ Task Execution** — Tasks execute automatically via cron (every 2 min) or heartbeat (every 30 min). Hit "Run Now" for immediate execution.
+- **🧠 Multi-agent** — Switch the dashboard between OpenClaw agents (usage + workspace) with an agent selector.
 
 ## Security
 
@@ -80,6 +81,11 @@ cd ~/.openclaw/workspace/dashboard
 ## Configuration
 
 Models and usage data are pulled automatically from your OpenClaw config (`openclaw.json`).
+
+Multi-agent:
+
+- VidClaw lists agents from `openclaw.json` plus whatever exists under `~/.openclaw/agents/`.
+- Most endpoints accept `agentId` as a query parameter. See [API.md](API.md).
 
 ## API
 

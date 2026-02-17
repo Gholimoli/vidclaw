@@ -3,7 +3,7 @@ import path from 'path';
 import { readTasks, writeTasks, logActivity } from '../lib/fileStore.js';
 import { broadcast } from '../broadcast.js';
 import { isoToDateInTz } from '../lib/timezone.js';
-import { WORKSPACE } from '../config.js';
+import { resolveAgentId, resolveAgentWorkspaceDir } from '../lib/agentContext.js';
 
 export function listTasks(req, res) {
   res.json(readTasks());
@@ -142,6 +142,8 @@ export function deleteTask(req, res) {
 }
 
 export function getCalendar(req, res) {
+  const agentId = resolveAgentId(req);
+  const WORKSPACE = resolveAgentWorkspaceDir(agentId);
   const memoryDir = path.join(WORKSPACE, 'memory');
   const data = {};
   try {

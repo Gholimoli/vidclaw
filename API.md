@@ -2,6 +2,21 @@
 
 All endpoints are served on `localhost:3333`.
 
+## Agents (multi-agent)
+
+VidClaw can operate on multiple OpenClaw agents by passing `agentId` as a query parameter.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/agents` | List known agent IDs (from OpenClaw config + state dir) |
+
+Endpoints that support `agentId`:
+
+- `/api/usage`
+- `/api/files*`
+- `/api/soul*` and `/api/workspace-file*`
+- `/api/calendar`
+
 ## Tasks
 
 | Method | Endpoint | Description |
@@ -19,7 +34,7 @@ All endpoints are served on `localhost:3333`.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/usage` | Usage stats with rate limit percentages |
+| GET | `/api/usage?agentId=` | Usage stats with rate limit percentages (per agent) |
 | GET | `/api/models` | List available models (from openclaw.json) |
 | POST | `/api/model` | Switch active model |
 
@@ -37,21 +52,21 @@ All endpoints are served on `localhost:3333`.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/files?path=` | List directory contents |
-| GET | `/api/files/content?path=` | Read file content |
-| GET | `/api/files/download?path=` | Download a file |
+| GET | `/api/files?agentId=&path=` | List directory contents |
+| GET | `/api/files/content?agentId=&path=` | Read file content |
+| GET | `/api/files/download?agentId=&path=` | Download a file |
 
 ## Soul & Workspace Files
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/soul` | Read SOUL.md |
-| PUT | `/api/soul` | Save SOUL.md (with version history) |
-| GET | `/api/soul/history` | Get SOUL.md version history |
-| POST | `/api/soul/revert` | Revert to a previous version |
+| GET | `/api/soul?agentId=` | Read SOUL.md |
+| PUT | `/api/soul?agentId=` | Save SOUL.md (with version history) |
+| GET | `/api/soul/history?agentId=` | Get SOUL.md version history |
+| POST | `/api/soul/revert?agentId=` | Revert to a previous version |
 | GET | `/api/soul/templates` | List persona templates |
-| GET | `/api/workspace-file?name=` | Read a workspace file |
-| PUT | `/api/workspace-file?name=` | Save a workspace file (with history) |
+| GET | `/api/workspace-file?agentId=&name=` | Read a workspace file |
+| PUT | `/api/workspace-file?agentId=&name=` | Save a workspace file (with history) |
 
 ## Heartbeat
 
@@ -64,4 +79,4 @@ All endpoints are served on `localhost:3333`.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/calendar` | Get activity data from memory files |
+| GET | `/api/calendar?agentId=` | Get activity data from memory files (per workspace) |

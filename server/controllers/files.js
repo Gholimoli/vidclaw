@@ -1,9 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import { __dirname, WORKSPACE, EXCLUDED } from '../config.js';
+import { __dirname, EXCLUDED } from '../config.js';
 import { readHistoryFile, appendHistory } from '../lib/fileStore.js';
+import { resolveAgentId, resolveAgentWorkspaceDir } from '../lib/agentContext.js';
 
 export function listFiles(req, res) {
+  const agentId = resolveAgentId(req);
+  const WORKSPACE = resolveAgentWorkspaceDir(agentId);
   const reqPath = req.query.path || '';
   const fullPath = path.join(WORKSPACE, reqPath);
   if (!fullPath.startsWith(WORKSPACE)) return res.status(403).json({ error: 'Forbidden' });
@@ -21,6 +24,8 @@ export function listFiles(req, res) {
 }
 
 export function getFileContent(req, res) {
+  const agentId = resolveAgentId(req);
+  const WORKSPACE = resolveAgentWorkspaceDir(agentId);
   const reqPath = req.query.path || '';
   const fullPath = path.join(WORKSPACE, reqPath);
   if (!fullPath.startsWith(WORKSPACE)) return res.status(403).json({ error: 'Forbidden' });
@@ -31,6 +36,8 @@ export function getFileContent(req, res) {
 }
 
 export function downloadFile(req, res) {
+  const agentId = resolveAgentId(req);
+  const WORKSPACE = resolveAgentWorkspaceDir(agentId);
   const reqPath = req.query.path || '';
   const fullPath = path.join(WORKSPACE, reqPath);
   if (!fullPath.startsWith(WORKSPACE)) return res.status(403).json({ error: 'Forbidden' });
@@ -38,6 +45,8 @@ export function downloadFile(req, res) {
 }
 
 export function getWorkspaceFile(req, res) {
+  const agentId = resolveAgentId(req);
+  const WORKSPACE = resolveAgentWorkspaceDir(agentId);
   const name = req.query.name;
   if (!name || name.includes('/') || name.includes('..')) return res.status(400).json({ error: 'Invalid name' });
   const fp = path.join(WORKSPACE, name);
@@ -49,10 +58,12 @@ export function getWorkspaceFile(req, res) {
 }
 
 export function putWorkspaceFile(req, res) {
+  const agentId = resolveAgentId(req);
+  const WORKSPACE = resolveAgentWorkspaceDir(agentId);
   const name = req.query.name;
   if (!name || name.includes('/') || name.includes('..')) return res.status(400).json({ error: 'Invalid name' });
   const fp = path.join(WORKSPACE, name);
-  const histPath = path.join(__dirname, 'data', `${name}-history.json`);
+  const histPath = path.join(__dirname, 'data', `${agentId}-${name}-history.json`);
   try {
     const old = fs.existsSync(fp) ? fs.readFileSync(fp, 'utf-8') : '';
     if (old) appendHistory(histPath, old);
@@ -62,7 +73,8 @@ export function putWorkspaceFile(req, res) {
 }
 
 export function getWorkspaceFileHistory(req, res) {
+  const agentId = resolveAgentId(req);
   const name = req.query.name;
   if (!name || name.includes('/') || name.includes('..')) return res.status(400).json({ error: 'Invalid name' });
-  res.json(readHistoryFile(path.join(__dirname, 'data', `${name}-history.json`)));
+  res.json(readHistoryFile(path.join(__dirname, 'data', `${agentId}-${name}-history.json`)));
 }

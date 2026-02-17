@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import UsageWidget from './Usage/UsageWidget'
 import { LayoutDashboard, Calendar, FolderOpen, Puzzle, Heart, Settings, Menu, X } from 'lucide-react'
+import { useAgent } from './AgentContext.jsx'
 
 const navItems = [
   { id: 'kanban', label: 'Tasks', icon: LayoutDashboard },
@@ -14,6 +15,7 @@ const navItems = [
 
 export default function Layout({ page, setPage, children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { agents, agentId, setAgentId } = useAgent()
 
   // Close sidebar on page change (mobile)
   useEffect(() => {
@@ -93,6 +95,23 @@ export default function Layout({ page, setPage, children }) {
             <span className="text-sm font-medium capitalize">{page === 'kanban' ? 'Task Board' : page === 'calendar' ? 'Activity Calendar' : page === 'skills' ? 'Skills Manager' : page === 'soul' ? 'Soul Editor' : page === 'settings' ? 'Settings' : 'Content Browser'}</span>
           </div>
           <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Agent</span>
+              <select
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                className={cn(
+                  'h-8 rounded-md border border-border bg-background px-2 text-xs',
+                  'focus:outline-none focus:ring-2 focus:ring-primary/30',
+                )}
+              >
+                {(agents?.length ? agents : [{ id: 'main', name: 'main' }]).map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name || a.id}
+                  </option>
+                ))}
+              </select>
+            </div>
             <UsageWidget />
           </div>
         </header>

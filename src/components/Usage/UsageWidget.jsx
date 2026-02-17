@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, Zap, ChevronDown, Coins, Hash, Cpu, AlertTriangle } from 'lucide-react'
+import { useAgent, withAgent } from '../AgentContext.jsx'
 
 function formatTokens(n) {
   if (!n) return '0'
@@ -48,12 +49,13 @@ export default function UsageWidget() {
   const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [restartNote, setRestartNote] = useState(false)
+  const { agentId } = useAgent()
 
   const fetchUsage = useCallback(async () => {
     setLoading(true)
     try {
       // Fetch VidClaw's own usage data (from session files)
-      const res = await fetch('/api/usage')
+      const res = await fetch(withAgent('/api/usage', agentId))
       setUsage(await res.json())
     } catch {}
     try {
@@ -79,7 +81,7 @@ export default function UsageWidget() {
       setOpenclawError(null)
     }
     setLoading(false)
-  }, [])
+  }, [agentId])
 
   useEffect(() => {
     fetchUsage()

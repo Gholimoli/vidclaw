@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, FileText, CheckCircle, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTimezone } from '../TimezoneContext'
+import { useAgent, withAgent } from '../AgentContext.jsx'
 
 function LiveClock({ timezone }) {
   const [now, setNow] = useState(new Date())
@@ -27,10 +28,11 @@ export default function CalendarView() {
   const [current, setCurrent] = useState(new Date())
   const [selected, setSelected] = useState(null)
   const { timezone } = useTimezone()
+  const { agentId } = useAgent()
 
   useEffect(() => {
-    fetch('/api/calendar').then(r => r.json()).then(setData).catch(() => {})
-  }, [])
+    fetch(withAgent('/api/calendar', agentId)).then(r => r.json()).then(setData).catch(() => {})
+  }, [agentId])
 
   const year = current.getFullYear()
   const month = current.getMonth()

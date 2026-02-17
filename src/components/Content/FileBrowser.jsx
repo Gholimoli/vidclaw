@@ -2,18 +2,23 @@ import React, { useState, useEffect } from 'react'
 import { Folder, File, ChevronRight, ArrowLeft, Download, Eye } from 'lucide-react'
 import FilePreview from './FilePreview'
 import { cn } from '@/lib/utils'
+import { useAgent } from '../AgentContext.jsx'
 
 export default function FileBrowser() {
   const [currentPath, setCurrentPath] = useState('')
   const [entries, setEntries] = useState([])
   const [preview, setPreview] = useState(null)
+  const { agentId } = useAgent()
 
   useEffect(() => {
-    fetch(`/api/files?path=${encodeURIComponent(currentPath)}`)
+    const u = new URL('/api/files', window.location.origin)
+    u.searchParams.set('agentId', agentId || 'main')
+    u.searchParams.set('path', currentPath || '')
+    fetch(u.pathname + u.search)
       .then(r => r.json())
       .then(setEntries)
       .catch(() => setEntries([]))
-  }, [currentPath])
+  }, [currentPath, agentId])
 
   function navigate(entry) {
     if (entry.isDirectory) {
@@ -32,6 +37,12 @@ export default function FileBrowser() {
   }
 
   const breadcrumbs = currentPath ? currentPath.split('/') : []
+  const downloadHref = (p) => {
+    const u = new URL('/api/files/download', window.location.origin)
+    u.searchParams.set('agentId', agentId || 'main')
+    u.searchParams.set('path', p)
+    return u.pathname + u.search
+  }
 
   return (
     <div className="flex flex-col md:flex-row gap-4 h-full">
@@ -70,7 +81,7 @@ export default function FileBrowser() {
               <span className="text-sm flex-1 truncate">{entry.name}</span>
               {!entry.isDirectory && (
                 <a
-                  href={`/api/files/download?path=${encodeURIComponent(entry.path)}`}
+                  href={downloadHref(entry.path)}
                   onClick={e => e.stopPropagation()}
                   className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all"
                 >
@@ -90,7 +101,7 @@ export default function FileBrowser() {
           <div className="flex items-center justify-between p-3 border-b border-border">
             <span className="text-sm font-medium truncate">{preview.split('/').pop()}</span>
             <div className="flex gap-2">
-              <a href={`/api/files/download?path=${encodeURIComponent(preview)}`} className="text-muted-foreground hover:text-foreground">
+              <a href={downloadHref(preview)} className="text-muted-foreground hover:text-foreground">
                 <Download size={14} />
               </a>
               <button onClick={() => setPreview(null)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>

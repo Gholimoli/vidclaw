@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { OPENCLAW_DIR } from '../config.js';
 import { readOpenclawJson } from '../lib/fileStore.js';
+import { resolveAgentId, resolveAgentSessionsDir } from '../lib/agentContext.js';
 import {
   getTimezone, startOfDayInTz, startOfWeekInTz, startOfMonthInTz,
 } from '../lib/timezone.js';
@@ -9,7 +10,8 @@ import { formatDuration } from '../lib/format.js';
 
 export function getUsage(req, res) {
   const now = new Date();
-  const sessionsDir = path.join(OPENCLAW_DIR, 'agents', 'main', 'sessions');
+  const agentId = resolveAgentId(req);
+  const sessionsDir = resolveAgentSessionsDir(agentId);
 
   let tokensToday = 0, tokensWeek = 0, tokensMonth = 0;
   let costToday = 0, costWeek = 0, costMonth = 0;
@@ -89,6 +91,7 @@ export function getUsage(req, res) {
   const weeklyPct = Math.min(100, Math.round((tokensWeek / WEEKLY_LIMIT) * 100));
 
   res.json({
+    agentId,
     model,
     timezone: tz,
     tiers: [

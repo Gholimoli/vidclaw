@@ -3,6 +3,7 @@ import path from 'path';
 import { __dirname } from './config.js';
 
 import { getActivity, getTime } from './controllers/activity.js';
+import { getAgents } from './controllers/agents.js';
 import {
   listTasks, createTask, updateTask, reorderTasks,
   runTask, getTaskQueue, pickupTask, completeTask, deleteTask,
@@ -24,6 +25,9 @@ const router = Router();
 // Activity
 router.get('/api/activity', getActivity);
 router.get('/api/time', getTime);
+
+// Agents
+router.get('/api/agents', getAgents);
 
 // Tasks
 router.get('/api/tasks', listTasks);

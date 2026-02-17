@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { useAgent } from '../AgentContext.jsx'
 
 const extToLang = {
   js: 'javascript', jsx: 'jsx', ts: 'typescript', tsx: 'tsx',
@@ -12,14 +13,18 @@ const extToLang = {
 export default function FilePreview({ path }) {
   const [content, setContent] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { agentId } = useAgent()
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/files/content?path=${encodeURIComponent(path)}`)
+    const u = new URL('/api/files/content', window.location.origin)
+    u.searchParams.set('agentId', agentId || 'main')
+    u.searchParams.set('path', path)
+    fetch(u.pathname + u.search)
       .then(r => r.json())
       .then(d => { setContent(d.content); setLoading(false) })
       .catch(() => { setContent('Failed to load file'); setLoading(false) })
-  }, [path])
+  }, [path, agentId])
 
   if (loading) return <div className="p-4 text-sm text-muted-foreground">Loading...</div>
 
