@@ -70,6 +70,13 @@ ssh -L 3333:localhost:3333 root@your-server
 
 The setup script also configures your `HEARTBEAT.md` so your agent automatically picks up tasks from the board.
 
+## Updating
+
+```bash
+cd ~/.openclaw/workspace/dashboard
+./update.sh
+```
+
 ## Configuration
 
 Models and usage data are pulled automatically from your OpenClaw config (`openclaw.json`).
@@ -91,4 +98,4 @@ MIT
 
 ---
 
-Built by [RedStudio](https://redstudio.ie) for [OpenClaw](https://github.com/openclaw/openclaw)
+Built by [woocassh](https://x.com/woocassh) · [GitHub](https://github.com/madrzak/vidclaw) · MIT License
